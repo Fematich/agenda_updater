@@ -4,9 +4,9 @@
 @date:      Tue Oct 22 18:04:08 2013
 """
 
-import requests
+import requests, json, re, datetime, pytz
 from BeautifulSoup import BeautifulSoup
-import json
+from google_agenda import makeEvent
 
 base_adress='http://kljichtegem.be/events/view/'
 month_labels='''
@@ -24,6 +24,7 @@ november
 december
 '''
 months=month_labels.split()
+dateformat=re.compile('(?P<day>\d*) (?P<month>.*) (?P<year>\d*) om (?P<hour>\d*)u(?P<minutes>\d*)')
 
 def ExtractEvent(content):
     page=BeautifulSoup(content)
@@ -33,14 +34,18 @@ def ExtractEvent(content):
         text=post.p(text=True)
     except Exception:
         text=''
-    return title,date,text
+    mtch=re.search(dateformat,date)
+    datum=datetime.datetime(int(mtch.group('year')),months.index(mtch.group('month'))+1,int(mtch.group('day')),int(mtch.group('hour')),int(mtch.group('minutes')))
+    return {'title':title,'date':datum.replace(tzinfo = pytz.timezone('Europe/Brussels')),'description':text}
 
 if __name__ == '__main__':
     settings=json.load(open('config.json','r'))
     postid=settings['postid']
     r = requests.get(base_adress+str(postid))
     while r.url!=u'http://kljichtegem.be/events/calendar':
-        print ExtractEvent(r.content)
+        event=ExtractEvent(r.content)
+        print event        
+        makeEvent(event)
         postid+=1
         r = requests.get(base_adress+str(postid))
     settings['postid']=postid-1
