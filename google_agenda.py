@@ -58,7 +58,7 @@ def makeEvent(event):
     try:
       event = {
           'summary': event['title'],
-          'location': 'KLJ-lokaal',
+          'location': event['location'],
           'start': {
               'dateTime': event['date'].isoformat('T')
               },

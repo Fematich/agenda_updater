@@ -36,11 +36,10 @@ def ExtractEvent(content):
         text=''
     mtch=re.search(dateformat,date)
     datum=datetime.datetime(int(mtch.group('year')),months.index(mtch.group('month'))+1,int(mtch.group('day')),int(mtch.group('hour')),int(mtch.group('minutes')))
-    return {'title':title,'date':datum.replace(tzinfo = pytz.timezone('Europe/Brussels')),'description':text}
-
-if __name__ == '__main__':
+    return {'title':title,'date':datum.replace(tzinfo = pytz.timezone('Europe/Brussels')),'description':text,'location':'KLJ-lokaal'}
+def updateKLJ():
     settings=json.load(open('config.json','r'))
-    postid=settings['postid']
+    postid=settings['KLJ']['postid']
     r = requests.get(base_adress+str(postid))
     while r.url!=u'http://kljichtegem.be/events/calendar':
         event=ExtractEvent(r.content)
@@ -48,5 +47,8 @@ if __name__ == '__main__':
         makeEvent(event)
         postid+=1
         r = requests.get(base_adress+str(postid))
-    settings['postid']=postid-1
+    settings['KLJ']['postid']=postid-1
     json.dump(settings,open('config.json','w'))
+
+if __name__ == '__main__':
+    updateKLJ()
